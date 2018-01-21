@@ -40,5 +40,26 @@ def ws_connect(message):
 >
 > Now,We could go back into our example above and add an expiring set and keep track of expiry times and so forth,but what would be the point of a framework if it made you add boilerplate code? Instead,Channels implements this abstraction as a core concept called Groups:
 
+```py
+@receiver(post_save, sender=BlogUpdate)
+def send_update(sender, instance, **kwargs):
+    Group("liveblog").send({
+    "text": json.dumps({
+    "id": instance.id,
+    "content": instance.content
+    })
+    })
+# Connected to websocket.connect
+def ws_connect(message):
+    # Add to reader group
+    Group("liveblog").add(message.reply_channel)
+    # Accept the connection request
+    message.reply_channel.send({"accept": True})
+# Connected to websocket.disconnect
+def ws_disconnect(message):
+# Remove from reader group on clean disconnect
+    Group("liveblog").discard(message.reply_channel)
+```
+
 
 
